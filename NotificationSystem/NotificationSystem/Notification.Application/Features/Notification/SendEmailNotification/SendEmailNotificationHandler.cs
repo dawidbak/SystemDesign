@@ -1,8 +1,9 @@
+using MassTransit;
 using Microsoft.AspNetCore.Http;
 using Notification.Application.Common;
 using Notification.Application.Domain;
-using Notification.Application.Features.Notification.Events;
 using Notification.Application.Infrastructure.Repositories;
+using Shared.Contracts;
 using Wolverine;
 
 namespace Notification.Application.Features.Notification.SendEmailNotification;
@@ -11,10 +12,10 @@ public class SendEmailNotificationHandler : IHttpCommandHandler<SendEmailNotific
 {
     private readonly ITemplateRepository _templateRepository;
     private readonly IUserRepository _userRepository;
-    private readonly IMessageBus _bus;
+    private readonly IPublishEndpoint _bus;
 
     public SendEmailNotificationHandler(ITemplateRepository templateRepository, IUserRepository userRepository,
-        IMessageBus bus)
+        IPublishEndpoint bus)
     {
         _templateRepository = templateRepository;
         _userRepository = userRepository;
@@ -47,7 +48,7 @@ public class SendEmailNotificationHandler : IHttpCommandHandler<SendEmailNotific
             template.Content
         );
 
-        await _bus.PublishAsync(@event);
+        await _bus.Publish(@event, cancellationToken);
         return Results.Ok(new { Message = "Email notification requested successfully." });
     }
 

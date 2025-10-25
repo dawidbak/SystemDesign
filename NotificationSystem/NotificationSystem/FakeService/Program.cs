@@ -1,29 +1,21 @@
-using FakeService.Events;
+using MassTransit;
 using Scalar.AspNetCore;
-using Wolverine;
-using Wolverine.RabbitMQ;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
 builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
-builder.UseWolverine(opts =>
+builder.Services.AddMassTransit(x =>
 {
-    opts.UseRabbitMq(new Uri(builder.Configuration.GetSection("ConnectionStrings")["RabbitMQ"]))
-        .DeclareExchange("UserExchange",
-            exchange => { exchange.BindQueue("UserQueue", nameof(UserRegisteredEvent)); }).AutoProvision();
-
-    opts.PublishMessage<UserRegisteredEvent>().ToRabbitQueue("UserQueue");
-    // opts.PublishMessage<UserRegisteredEvent>().ToRabbitExchange("UserExchange");
+    x.UsingRabbitMq((context, cfg) =>
+    {
+        cfg.Host(new Uri(builder.Configuration.GetConnectionString("RabbitMQ")!));
+    });
 });
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
@@ -31,9 +23,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
-// app.UseAuthorization();
-
 app.MapControllers();
 
 app.Run();

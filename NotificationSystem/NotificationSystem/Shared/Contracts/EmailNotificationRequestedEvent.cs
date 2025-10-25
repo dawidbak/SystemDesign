@@ -1,3 +1,3 @@
-﻿namespace Notification.Application.Features.Notification.Events;
+﻿namespace Shared.Contracts;
 
 public record EmailNotificationRequestedEvent(string RecipientEmail, string Subject, string Body);

@@ -1,11 +1,11 @@
-﻿using Notification.Application.Features.User.Events;
-using Rebus.Handlers;
+﻿using MassTransit;
 using Notification.Application.Domain;
 using Notification.Application.Infrastructure.Repositories;
+using Shared.Contracts;
 
 namespace Notification.Application.Features.User.IngestUser;
 
-public class UserRegisteredEventHandler : IHandleMessages<UserRegisteredEvent>
+public class UserRegisteredEventHandler : IConsumer<UserRegisteredEvent>
 {
     private readonly IUserRepository _repository;
 
@@ -14,8 +14,9 @@ public class UserRegisteredEventHandler : IHandleMessages<UserRegisteredEvent>
         _repository = repository;
     }
 
-    public async Task Handle(UserRegisteredEvent message)
+    public async Task Consume(ConsumeContext<UserRegisteredEvent> context)
     {
+        var message = context.Message;
         var user = new Domain.User(
             message.Id,
             message.Email,
@@ -35,9 +36,20 @@ public class UserRegisteredEventHandler : IHandleMessages<UserRegisteredEvent>
             return;
         }
 
-        var device = new Device(Guid.CreateVersion7(), deviceInfo.DeviceToken, user.Id,
-            TimeProvider.System.GetUtcNow().UtcDateTime, deviceInfo.Type);
-        user.Devices.Add(device);
+        var domainDeviceType = deviceInfo.Type switch
+        {
+            Shared.Contracts.DeviceType.Ios => Domain.DeviceType.Ios,
+            Shared.Contracts.DeviceType.Android => Domain.DeviceType.Android,
+            _ => throw new ArgumentOutOfRangeException(nameof(deviceInfo.Type))
+        };
+
+        var device = new Device(
+            Guid.CreateVersion7(),
+            deviceInfo.DeviceToken,
+            user.Id,
+            TimeProvider.System.GetUtcNow().UtcDateTime,
+            domainDeviceType);
+        user.Devices = new List<Device> { device };
     }
 
     private static void ApplyDefaultSettings(Domain.User user)
@@ -48,8 +60,12 @@ public class UserRegisteredEventHandler : IHandleMessages<UserRegisteredEvent>
             Guid.CreateVersion7());
         var pushSetting = new Domain.Setting(user.Id, ChannelType.PushNotification, true,
             Guid.CreateVersion7());
-
-        user.Settings.Add(emailSetting);
-        user.Settings.Add(smsSetting);
+        
+        user.Settings = new List<Domain.Setting>
+        {
+            emailSetting,
+            smsSetting,
+            pushSetting
+        };
     }
 }

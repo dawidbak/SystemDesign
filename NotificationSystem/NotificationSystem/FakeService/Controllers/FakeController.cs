@@ -1,6 +1,6 @@
-﻿using FakeService.Events;
+﻿using MassTransit;
 using Microsoft.AspNetCore.Mvc;
-using Wolverine;
+using Shared.Contracts;
 
 namespace FakeService.Controllers;
 
@@ -8,26 +8,37 @@ namespace FakeService.Controllers;
 [Route("[controller]")]
 public class FakeController : ControllerBase
 {
-    private readonly IMessageBus _messageBus;
+    private readonly IPublishEndpoint _publishEndpoint;
+    private readonly ILogger<FakeController> _logger;
 
-    public FakeController(IMessageBus messageBus)
+    public FakeController(IPublishEndpoint publishEndpoint, ILogger<FakeController> logger)
     {
-        _messageBus = messageBus;
+        _publishEndpoint = publishEndpoint;
+        _logger = logger;
     }
 
     [HttpPost]
     public async Task<IActionResult> CreateUser([FromBody] bool addDeviceInfo)
     {
-        var @event =
-            new UserRegisteredEvent(Guid.CreateVersion7(), $"{Guid.NewGuid()}@example.com", 123456789, 48, null);
+        DeviceInfo? deviceInfo = null;
         if (addDeviceInfo)
         {
-            @event = @event with
-            {
-                DeviceInfo = new DeviceInfo($"{Guid.NewGuid()}", DeviceType.Android)
-            };
+            deviceInfo = new DeviceInfo($"device-token-{Guid.NewGuid()}", DeviceType.Android);
         }
-        await _messageBus.PublishAsync(@event);
-        return Ok();
+
+        var @event = new UserRegisteredEvent(
+            Guid.CreateVersion7(),
+            $"{Guid.NewGuid()}@example.com",
+            123456789,
+            48,
+            deviceInfo);
+        await _publishEndpoint.Publish(@event);
+
+        return Ok(new
+        {
+            message = "Event published successfully",
+            eventId = @event.Id,
+            email = @event.Email
+        });
     }
 }

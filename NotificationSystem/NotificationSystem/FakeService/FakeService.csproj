@@ -7,13 +7,17 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="MassTransit" Version="8.5.5" />
+        <PackageReference Include="MassTransit.RabbitMQ" Version="8.5.5" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.10"/>
-        <PackageReference Include="Rebus" Version="8.9.0" />
-        <PackageReference Include="Rebus.RabbitMq" Version="10.1.0" />
-        <PackageReference Include="Rebus.ServiceProvider" Version="10.6.0" />
+        <PackageReference Include="RabbitMQ.Client" Version="7.1.2" />
         <PackageReference Include="Scalar.AspNetCore" Version="2.9.0" />
         <PackageReference Include="WolverineFx" Version="4.12.3" />
         <PackageReference Include="WolverineFx.RabbitMQ" Version="4.12.3" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Shared\Shared.csproj" />
     </ItemGroup>
 
 </Project>
