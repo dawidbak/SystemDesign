@@ -1,6 +1,7 @@
 using MassTransit;
 using Notification.Application;
 using Notification.Application.Common;
+using Notification.Application.Features.Notification.SendPaymentReminderEmailNotification;
 using Notification.Application.Features.User.IngestUser;
 using Scalar.AspNetCore;
 
@@ -17,6 +18,7 @@ builder.Services.AddStackExchangeRedisCache(options =>
 builder.Services.AddMassTransit(x =>
 {
     x.AddConsumer<UserRegisteredEventHandler>();
+    x.AddConsumer<PaymentReminderCreatedEventHandler>();
 
     x.UsingRabbitMq((context, cfg) =>
     {
