@@ -42,12 +42,12 @@ The solution follows Vertical Slice Architecture principles, where features are 
     │
     ├── Features/                 # Feature-based organization (Vertical Slices)
     │   └── Url/
-    │       ├── GetShortUrl/      # Complete slice: Endpoint → Handler → Repository
+    │       ├── GetShortUrl/      # Complete slice: Endpoint → Handler →  shared repository
     │       │   ├── Endpoint.cs
     │       │   ├── GetShortUrl.cs
     │       │   └── GetShortUrlHandler.cs
     │       │
-    │       └── ShortenUrl/       # Complete slice: Endpoint → Handler → Repository
+    │       └── ShortenUrl/       # Complete slice: Endpoint → Handler → shared repository
     │           ├── Endpoint.cs
     │           ├── ShortenUrl.cs
     │           ├── ShortenUrlDto.cs
@@ -128,8 +128,17 @@ With overhead:     189.8 TB × 2 (indexes, replication, overhead)
 
 <img width="1500" height="752" alt="image" src="https://github.com/user-attachments/assets/01d0b50d-a5d7-4030-8e77-f4eb3736b950" />
 
-If we need more API instances, we can easily scale thanks to Snowflake ID (we don't need to have a central point thanks to WorkerId assignment). When scaling the database, we need to use sharding based on consistent hashing.
+#### Scalability Strategy
 
+The system is designed for horizontal scalability across multiple layers:
+
+**API Layer**: Scales horizontally with Snowflake ID generation, allowing each instance to produce globally unique identifiers without a central coordination point.
+
+**Caching Layer**: Frequently accessed URLs are served from an in-memory cache, reducing latency and offloading read traffic from the database. If multiple cache nodes are used, consistent hashing ensures even key distribution and minimizes cache rebalancing when nodes are added or removed.
+
+**Database Layer**: PostgreSQL serves as the primary data store with read replicas to handle the high read-to-write ratio (~10:1), improving both throughput and availability.
+
+**Future Scaling**: As the system grows, PostgreSQL can be partitioned or sharded (e.g., by ID ranges or time-based keys) to distribute load across multiple nodes. If the caching layer expands further, consistent hashing can be leveraged to maintain a balanced and resilient cache topology across distributed instances.
 
 ---
 
