@@ -4,7 +4,6 @@ using Notification.Application.Common;
 using Notification.Application.Domain;
 using Notification.Application.Infrastructure.Repositories;
 using Shared.Contracts;
-using Wolverine;
 
 namespace Notification.Application.Features.Notification.SendEmailNotification;
 

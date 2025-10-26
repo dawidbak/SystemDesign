@@ -23,9 +23,6 @@
         </PackageReference>
         <PackageReference Include="Scalar.AspNetCore" Version="2.9.0" />
         <PackageReference Include="StackExchange.Redis" Version="2.9.32" />
-        <PackageReference Include="WolverineFx" Version="4.12.3" />
-        <PackageReference Include="WolverineFx.FluentValidation" Version="4.12.3" />
-        <PackageReference Include="WolverineFx.RabbitMQ" Version="4.12.3" />
         <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="9.0.0" />
     </ItemGroup>
 

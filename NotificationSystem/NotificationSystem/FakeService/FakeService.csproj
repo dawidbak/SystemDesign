@@ -12,8 +12,6 @@
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.10"/>
         <PackageReference Include="RabbitMQ.Client" Version="7.1.2" />
         <PackageReference Include="Scalar.AspNetCore" Version="2.9.0" />
-        <PackageReference Include="WolverineFx" Version="4.12.3" />
-        <PackageReference Include="WolverineFx.RabbitMQ" Version="4.12.3" />
     </ItemGroup>
 
     <ItemGroup>
