@@ -17,4 +17,6 @@ public class Template
         Subject = subject;
         CreatedAt = TimeProvider.System.GetUtcNow().UtcDateTime;
     }
+    
+    public Template(){}
 }

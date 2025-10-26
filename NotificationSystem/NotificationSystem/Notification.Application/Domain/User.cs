@@ -18,4 +18,6 @@ public class User
         PhoneNumber = phoneNumber;
         CreatedAt = TimeProvider.System.GetUtcNow().UtcDateTime;
     }
+    
+    public User(){}
 }

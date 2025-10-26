@@ -14,6 +14,8 @@ public class Setting
         Channel = channel;
         OptIn = optIn;
     }
+    
+    public Setting(){}
 
     public void ChangeOptIn()
     {

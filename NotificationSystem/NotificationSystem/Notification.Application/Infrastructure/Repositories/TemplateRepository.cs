@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
 using Notification.Application.Domain;
 using Notification.Application.Infrastructure.Persistence;
 

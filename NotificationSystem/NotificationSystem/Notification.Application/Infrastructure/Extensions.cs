@@ -15,13 +15,10 @@ public static class Extensions
         
         services.AddScoped<IDeviceRepository, DeviceRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
+        services.Decorate<IUserRepository, CacheUserRepository>();
         services.AddScoped<ITemplateRepository, TemplateRepository>();
+        services.Decorate<ITemplateRepository, CacheTemplateRepository>();
         services.AddScoped<ISettingRepository, SettingRepository>();
-
-        // services.AddScoped<UrlMappingRepository>();
-        // services.AddScoped<IUrlMappingRepository, CacheUrlMappingRepository>();
-        // services.AddMemoryCache();
-        // services.AddScoped<ISnowflakeService, SnowflakeService>();
     }
 }
 

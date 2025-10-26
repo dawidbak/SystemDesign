@@ -16,4 +16,6 @@ public class Device
         LastLoggedInAt = lastLoggedInAt;
         Type = type;
     }
+    
+    public Device(){}
 }
