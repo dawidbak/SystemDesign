@@ -17,7 +17,6 @@ Building a scalable system that sends millions of notifications per day is chall
 - Devices: iOS, Android, Laptop/Desktop (web / native clients).
 - Triggers:
   - Client-initiated (immediate user or system actions).
-  - Server-scheduled (batch / delayed / campaign events).
 
 ### Scale & Volumes (Daily)
 | Channel | Daily Notifications | Avg / Second (≈/86400) |
@@ -42,12 +41,22 @@ Peak traffic often exceeds averages (e.g. ×2–×5 burst). Design should assume
 ## 📐 System Design
 
 ### High-Level Architecture Diagram
+<img width="1710" height="872" alt="image" src="https://github.com/user-attachments/assets/9cfeda5c-54de-43a6-b9a9-71e3279540ba" />
 
 ### User contact info gathering flow
+It's beyond the scope of the task, just how it would look in practice.
+<img width="1694" height="574" alt="image" src="https://github.com/user-attachments/assets/79bb98f6-e08b-406b-a036-98e6a6fe454a" />
 
 ### Notification service database schema
+<img width="778" height="569" alt="image" src="https://github.com/user-attachments/assets/ba5c3291-8abb-4419-8fbc-4d9697a446a2" />
 
-### Notification Email Worker flow
+### Notification Email Worker flows
+<img width="1178" height="861" alt="image" src="https://github.com/user-attachments/assets/df366036-459f-4ae9-b643-7116879c72ef" />
+<img width="1424" height="776" alt="image" src="https://github.com/user-attachments/assets/54eeb143-551a-4791-8fe6-e6651f88aea3" />
+<img width="725" height="152" alt="image" src="https://github.com/user-attachments/assets/5189e374-f7ea-4d81-9cdb-eef6d819eaa1" />
+
+
+
 
 ### Scalability Considerations
 
@@ -120,11 +129,11 @@ Vertical Slice Architecture: each feature encapsulates endpoint + handler + cont
 |-----------------|---------------------------------------------------------|
 | Platform        | .NET 9                                                  |
 | API             | ASP.NET Core Minimal APIs                               |
-| Messaging       | MassTransit + RabbitMQ                                  |
+| EDA             | MassTransit + RabbitMQ                                  |
 | Cache           | Redis (StackExchange.Redis + DistributedCache)          |
 | Database        | PostgreSQL 18                                           |
 | Documentation   | OpenAPI + Scalar                                        |
-| Containerization | Docker / Docker Compose                                 |
+| Containerization | Docker / Docker Compose                                |
 
 ---
 ## 📋 Prerequisites
