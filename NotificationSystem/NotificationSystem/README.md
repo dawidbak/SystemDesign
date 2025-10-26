@@ -59,6 +59,19 @@ It's beyond the scope of the task, just how it would look in practice.
 
 
 ### Scalability Considerations
+**Identifier Generation:** UUID v7 is used for generating IDs for users, devices, and settings. This ensures globally unique identifiers with temporal ordering, enabling efficient partitioning and indexing.
+
+**API:** The Notification System accepts events in two ways: via HTTP requests from services or as a consumer of message queues. In both cases, it publishes events to workers for processing. This flexible intake approach allows the system to handle diverse sources of events efficiently and maintain high availability.
+
+**Queue Layer:** RabbitMQ handles asynchronous processing via separate queues for iOS, Android, SMS, and Email notifications. Queues decouple producers from consumers, allowing workers to scale horizontally based on workload and throughput.
+
+**Worker Layer:** Workers for each queue can be independently scaled, processing events published by the Notification System. This allows the system to handle spikes in notifications efficiently without overloading the database or external services.
+
+**Caching Layer**: Redis is used to store user-related data and templates. This reduces database reads and improves response times. If multiple Redis nodes are used, consistent hashing ensures balanced distribution of cache entries and smooth scaling when nodes are added or removed(virtual nodes) or we can add i.e. 4 nodes using Id of node to hash function.
+
+Database Layer: PostgreSQL stores persistent user data, devices, settings, and templates. When the Notification System writes to the database, the primary node receives the write, and it is then replicated to replicas. Read replicas handle most worker and API queries, reducing load on the primary. This setup ensures scalability while maintaining data durability and eventual consistency.
+
+External Integration Layer: Third-party services (APNS, Firebase, SMS gateways, Email providers) are accessed asynchronously via workers. This allows the system to scale independently of external service latency or throughput limits.
 
 ---
 ## 🚀 Features
