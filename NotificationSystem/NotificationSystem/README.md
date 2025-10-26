@@ -61,7 +61,7 @@ It's beyond the scope of the task, just how it would look in practice.
 ### Scalability Considerations
 **Identifier Generation:** UUID v7 is used for generating IDs for users, devices, and settings. This ensures globally unique identifiers with temporal ordering, enabling efficient partitioning and indexing.
 
-**API:** The Notification System accepts events in two ways: via HTTP requests from services or as a consumer of message queues. In both cases, it publishes events to workers for processing. This flexible intake approach allows the system to handle diverse sources of events efficiently and maintain high availability.
+**API:** The Notification System accepts events in two ways: via HTTP requests from services or as a consumer of message queues. In both cases, it publishes events to workers for processing. Thanks for that, we can scale it horizontally or vertically depending on usage.
 
 **Queue Layer:** RabbitMQ handles asynchronous processing via separate queues for iOS, Android, SMS, and Email notifications. Queues decouple producers from consumers, allowing workers to scale horizontally based on workload and throughput.
 
@@ -69,9 +69,9 @@ It's beyond the scope of the task, just how it would look in practice.
 
 **Caching Layer**: Redis is used to store user-related data and templates. This reduces database reads and improves response times. If multiple Redis nodes are used, consistent hashing ensures balanced distribution of cache entries and smooth scaling when nodes are added or removed(virtual nodes) or we can add i.e. 4 nodes using Id of node to hash function.
 
-Database Layer: PostgreSQL stores persistent user data, devices, settings, and templates. When the Notification System writes to the database, the primary node receives the write, and it is then replicated to replicas. Read replicas handle most worker and API queries, reducing load on the primary. This setup ensures scalability while maintaining data durability and eventual consistency.
+**Database Layer**: PostgreSQL stores persistent user data, devices, settings, and templates. When the Notification System writes to the database, the primary node receives the write, and it is then replicated to replicas. Read replicas handle most worker and API queries, reducing load on the primary. This setup ensures scalability while maintaining data durability and eventual consistency.
 
-External Integration Layer: Third-party services (APNS, Firebase, SMS gateways, Email providers) are accessed asynchronously via workers. This allows the system to scale independently of external service latency or throughput limits.
+**External Integration Layer**: Third-party services (APNS, Firebase, SMS gateways, Email providers) are accessed asynchronously via workers. This allows the system to scale independently of external service latency or throughput limits.
 
 ---
 ## 🚀 Features
@@ -91,7 +91,7 @@ External Integration Layer: Third-party services (APNS, Firebase, SMS gateways, 
 ---
 ## 🏗️ Architecture Overview
 
-Vertical Slice Architecture: each feature encapsulates endpoint + handler + contracts + data access (decorated repositories). Shared abstractions kept minimal.
+Vertical Slice Architecture: each feature encapsulates endpoint + handler. Shared abstractions kept minimal.
 
 ```
 ├── compose.yaml                        # Local infra: PostgreSQL, RabbitMQ, Redis
@@ -164,30 +164,25 @@ docker compose up -d
 ```
 Starts containers: PostgreSQL (`notificationsystem`), RabbitMQ (5672 / 15672), Redis (6379).
 
-### 2. (Optional) Ping Redis
-```bash
-docker exec -it notificationsystem-redis redis-cli ping
-```
-
-### 3. Run API
+### 2. Run API
 ```bash
 cd Notification.Api
 dotnet run
 ```
 
-### 4. Run Fake Service
+### 3. Run Fake Service
 ```bash
 cd ../FakeService
 dotnet run
 ```
 
-### 5. Run Email Job
+### 4. Run Email Job
 ```bash
 cd ../NotificationEmailJob
 dotnet run
 ```
 
-### 6. API Documentation
+### 5. API Documentation
 In Development: `http://localhost:<api-port>/scalar`.
 
 ---
