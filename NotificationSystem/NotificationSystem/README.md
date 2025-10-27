@@ -58,7 +58,8 @@ It's beyond the scope of the task, just how it would look in practice.
 
 ### Scalability Considerations
 **Identifier Generation:** UUID v7 is used for generating IDs for users, devices, and settings. This ensures globally unique identifiers with temporal ordering, enabling efficient partitioning and indexing.
-Using calculator: https://devina.io/collision-calculator it will take 5 centuries to get a collision :)
+
+Using calculator: https://devina.io/collision-calculator it will take 5 centuries to get a  0.01% collision :)
 
 **API:** The Notification System accepts events in two ways: via HTTP requests from services or as a consumer of message queues. In both cases, it publishes events to workers for processing. Thanks for that, we can scale it horizontally or vertically depending on usage.
 
