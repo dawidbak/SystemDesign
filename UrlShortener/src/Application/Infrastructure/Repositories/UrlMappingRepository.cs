@@ -1,7 +1,9 @@
-﻿using Application.Domain;
+﻿using Application.Common.Options;
+using Application.Domain;
 using Application.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Options;
 
 namespace Application.Infrastructure.Repositories;
 
@@ -44,18 +46,20 @@ public class CacheUrlMappingRepository : IUrlMappingRepository
 {
     private readonly IMemoryCache _memoryCache;
     private readonly UrlMappingRepository _urlMappingRepository;
+    private readonly CacheOptions _cacheOptions;
 
-    public CacheUrlMappingRepository(IMemoryCache memoryCache, UrlMappingRepository repository)
+    public CacheUrlMappingRepository(IMemoryCache memoryCache, UrlMappingRepository repository, IOptions<CacheOptions> cacheOptions)
     {
         _memoryCache = memoryCache;
         _urlMappingRepository = repository;
+        _cacheOptions = cacheOptions.Value;
     }
 
     public async Task<UrlMapping?> GetByOriginalUrl(string originalUrl, CancellationToken cancellationToken)
     {
         return await _memoryCache.GetOrCreateAsync(originalUrl, async entry =>
         {
-            entry.SlidingExpiration = TimeSpan.FromMinutes(10);
+            entry.SlidingExpiration = _cacheOptions.SlidingExpiration;
             return await _urlMappingRepository.GetByOriginalUrl(originalUrl, cancellationToken);
         });
     }
@@ -64,7 +68,7 @@ public class CacheUrlMappingRepository : IUrlMappingRepository
     {
         return await _memoryCache.GetOrCreateAsync(shortUrl, async entry =>
         {
-            entry.SlidingExpiration = TimeSpan.FromMinutes(10);
+            entry.SlidingExpiration = _cacheOptions.SlidingExpiration;
             return await _urlMappingRepository.GetByShortUrl(shortUrl, cancellationToken);
         });
     }
