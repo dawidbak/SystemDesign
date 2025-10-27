@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
 using Notification.Application.Domain;
 using Notification.Application.Infrastructure.Persistence;
 
@@ -14,10 +15,12 @@ public interface ISettingRepository
 public class SettingRepository : ISettingRepository
 {
     private readonly NotificationDbContext _dbContext;
+    private readonly IDistributedCache _cache;
 
-    public SettingRepository(NotificationDbContext dbContext)
+    public SettingRepository(NotificationDbContext dbContext, IDistributedCache cache)
     {
         _dbContext = dbContext;
+        _cache = cache;
     }
 
     public async Task<List<Setting>> GetAllByUserIdAsync(Guid userId, CancellationToken cancellationToken)
@@ -37,5 +40,6 @@ public class SettingRepository : ISettingRepository
     {
         _dbContext.Settings.Update(setting);
         await _dbContext.SaveChangesAsync(cancellationToken);
+        await _cache.InvalidateUserCacheAsync(setting.UserId, cancellationToken);
     }
 }

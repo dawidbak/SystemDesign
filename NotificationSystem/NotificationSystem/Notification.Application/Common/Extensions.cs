@@ -20,12 +20,6 @@ public static class EndpointsExtensions
             .WithScopedLifetime());
     }
 
-    // public static void RegisterOptions(this IServiceCollection services, IConfiguration configuration)
-    // {
-    //     services.Configure<ShortenerOptions>(
-    //         configuration.GetSection(ShortenerOptions.Shortener));
-    // }
-
     public static void RegisterEndpoints(this IEndpointRouteBuilder app)
     {
         var assembly = Assembly.GetAssembly(typeof(EndpointsExtensions));

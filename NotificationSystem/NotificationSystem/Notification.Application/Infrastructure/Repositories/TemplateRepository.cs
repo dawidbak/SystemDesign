@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
+using Notification.Application.Common;
 using Notification.Application.Domain;
 using Notification.Application.Infrastructure.Persistence;
 
@@ -56,8 +57,6 @@ public class CacheTemplateRepository : ITemplateRepository
     private readonly ITemplateRepository _repository;
     private readonly IDistributedCache _cache;
 
-    private const string TemplateCacheKeyPrefix = "template_";
-
     public CacheTemplateRepository(ITemplateRepository repository, IDistributedCache cache)
     {
         _repository = repository;
@@ -66,7 +65,7 @@ public class CacheTemplateRepository : ITemplateRepository
 
     public async Task<Template?> GetByIdAsync(int templateId, CancellationToken cancellationToken)
     {
-        var cacheKey = $"{TemplateCacheKeyPrefix}{templateId}";
+        var cacheKey = CacheKeys.Template(templateId);
         var cachedTemplate = await _cache.GetStringAsync(cacheKey, cancellationToken);
         if (cachedTemplate != null)
         {
@@ -74,14 +73,14 @@ public class CacheTemplateRepository : ITemplateRepository
         }
 
         var template = await _repository.GetByIdAsync(templateId, cancellationToken);
-        await _cache.SetStringAsync(cacheKey,
+        await _cache.SetStringWithSlidingAsync(cacheKey,
             System.Text.Json.JsonSerializer.Serialize(template), cancellationToken);
         return template;
     }
 
     public async Task<List<Template>> GetAllAsync(CancellationToken cancellationToken)
     {
-        const string cacheKey = $"{TemplateCacheKeyPrefix}all";
+        var cacheKey = CacheKeys.TemplateAll();
         var cachedTemplates = await _cache.GetStringAsync(cacheKey, cancellationToken);
         if (cachedTemplates != null)
         {
@@ -89,14 +88,14 @@ public class CacheTemplateRepository : ITemplateRepository
         }
 
         var templates = await _repository.GetAllAsync(cancellationToken);
-        await _cache.SetStringAsync(cacheKey,
+        await _cache.SetStringWithSlidingAsync(cacheKey,
             System.Text.Json.JsonSerializer.Serialize(templates), cancellationToken);
         return templates;
     }
 
     public async Task<Template?> GetLatestByTypeAsync(ChannelType type, CancellationToken cancellationToken)
     {
-        var cacheKey = $"{TemplateCacheKeyPrefix}latest_{type}";
+        var cacheKey = CacheKeys.TemplateLatestByType(type);
         var cachedTemplate = await _cache.GetStringAsync(cacheKey, cancellationToken);
         if (cachedTemplate != null)
         {
@@ -104,7 +103,7 @@ public class CacheTemplateRepository : ITemplateRepository
         }
 
         var template = await _repository.GetLatestByTypeAsync(type, cancellationToken);
-        await _cache.SetStringAsync(cacheKey,
+        await _cache.SetStringWithSlidingAsync(cacheKey,
             System.Text.Json.JsonSerializer.Serialize(template), cancellationToken);
         return template;
     }
@@ -112,7 +111,7 @@ public class CacheTemplateRepository : ITemplateRepository
     public async Task<Template> CreateAsync(Template template, CancellationToken cancellationToken)
     {
         var createdTemplate = await _repository.CreateAsync(template, cancellationToken);
-        var cacheKeyById = $"{TemplateCacheKeyPrefix}{createdTemplate.Id}";
+        var cacheKeyById = CacheKeys.Template(createdTemplate.Id);
 
         await _cache.SetStringAsync(cacheKeyById,
             System.Text.Json.JsonSerializer.Serialize(createdTemplate), cancellationToken);

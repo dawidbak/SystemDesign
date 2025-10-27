@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
+using Notification.Application.Common;
 using Notification.Application.Domain;
 using Notification.Application.Infrastructure.Persistence;
 
@@ -40,8 +41,6 @@ public class CacheUserRepository : IUserRepository
     private readonly IUserRepository _repository;
     private readonly IDistributedCache _cache;
 
-    private const string UserCachePrefix = "user_";
-
     public CacheUserRepository(IUserRepository repository, IDistributedCache cache)
     {
         _repository = repository;
@@ -50,15 +49,15 @@ public class CacheUserRepository : IUserRepository
 
     public async Task<User?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
     {
-        var cacheUser = await _cache.GetStringAsync($"{UserCachePrefix}{id}", token: cancellationToken);
+        var cacheUser = await _cache.GetStringAsync(CacheKeys.User(id), token: cancellationToken);
         if (cacheUser is not null)
         {
             return System.Text.Json.JsonSerializer.Deserialize<User>(cacheUser);
         }
 
         var user = await _repository.GetByIdAsync(id, cancellationToken);
-        await _cache.SetStringAsync(
-            $"{UserCachePrefix}{id}",
+        await _cache.SetStringWithSlidingAsync(
+            CacheKeys.User(id),
             System.Text.Json.JsonSerializer.Serialize(user), cancellationToken);
         return user;
     }
@@ -66,8 +65,8 @@ public class CacheUserRepository : IUserRepository
     public async Task AddAsync(User user, CancellationToken cancellationToken)
     {
         await _repository.AddAsync(user, cancellationToken);
-        await _cache.SetStringAsync(
-            $"{UserCachePrefix}{user.Id}",
+        await _cache.SetStringWithSlidingAsync(
+            CacheKeys.User(user.Id),
             System.Text.Json.JsonSerializer.Serialize(user), cancellationToken);
     }
 }
