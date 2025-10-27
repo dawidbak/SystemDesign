@@ -62,23 +62,6 @@ The solution follows Vertical Slice Architecture principles, where features are 
         └── Migrations/           # EF Core migrations
 ```
 
-## 🛠️ Technology Stack
-
-- **.NET 9** - Latest .NET framework
-- **ASP.NET Core Minimal APIs** - Lightweight HTTP APIs
-- **Entity Framework Core** - ORM for database operations
-- **PostgreSQL 18** - Primary database
-- **Docker & Docker Compose** - Containerization
-- **IdGen** - Snowflake ID generation library
-- **Scalar** - Modern API documentation
-- **In-Memory Cache** - Performance optimization
-
-## 📋 Prerequisites
-
-- .NET 9 SDK
-- Docker Desktop (for PostgreSQL)
-- Visual Studio 2022 / JetBrains Rider / VS Code
-
 ## 📊 Business Requirements & Capacity Planning
 
 ### Traffic Estimates
@@ -134,11 +117,11 @@ The system is designed for horizontal scalability across multiple layers:
 
 **API Layer**: Scales horizontally with Snowflake ID generation, allowing each instance to produce globally unique identifiers without a central coordination point.
 
-**Caching Layer**: Frequently accessed URLs are served from an in-memory cache, reducing latency and offloading read traffic from the database. If multiple cache nodes are used, consistent hashing ensures even key distribution and minimizes cache rebalancing when nodes are added or removed.
+**Caching Layer**: Frequently accessed URLs are served from an in-memory cache, reducing latency and offloading read traffic from the database. With scaling horizontally consistent hashing ensures even key distribution and minimizes cache rebalancing when nodes(virtual nodes) are added or removed.
 
 **Database Layer**: PostgreSQL serves as the primary data store with read replicas to handle the high read-to-write ratio (~10:1), improving both throughput and availability.
 
-**Future Scaling**: As the system grows, PostgreSQL can be partitioned or sharded (e.g., by ID ranges or time-based keys) to distribute load across multiple nodes. If the caching layer expands further, consistent hashing can be leveraged to maintain a balanced and resilient cache topology across distributed instances.
+**Future Scaling**: As the system grows, PostgreSQL can be partitioned or sharded (e.g., by ID ranges or time-based keys) to distribute load across multiple nodes.
 
 ---
 
@@ -146,6 +129,70 @@ The system is designed for horizontal scalability across multiple layers:
 <img width="1211" height="891" alt="image" src="https://github.com/user-attachments/assets/1b40b11f-520d-42a0-bc67-a155782e2cf5" />
 
 <img width="1352" height="593" alt="image" src="https://github.com/user-attachments/assets/7669ffd8-eb93-4b94-b947-db09569637f5" />
+
+## 🎯 Design Patterns Used
+
+### 1. **Decorator Pattern (Cache Proxy)**
+The `CacheUrlMappingRepository` wraps the `UrlMappingRepository` to add caching functionality without modifying the original repository:
+- First checks in-memory cache
+- Falls back to database if not cached
+- Automatically caches results for subsequent requests
+
+### 2. **CQRS (Command Query Responsibility Segregation)**
+- **Commands**: `ShortenUrl` - Modifies state (creates new mappings)
+- **Queries**: `GetShortUrl` - Reads state (retrieves URLs)
+
+### 3. **Vertical Slice Architecture**
+Features are organized by use case rather than technical layers
+
+## ⚡ Performance Features
+
+### Snowflake ID Generation
+- **Distributed**: Generates unique IDs across multiple instances
+- **Time-based**: IDs are chronologically sortable
+- **Compact**: Efficient 64-bit unsigned integers
+- **Custom Epoch**: Started from 2025-10-18 for extended lifespan
+64-bit layout (1 unused sign bit + 63 bits payload):
+
+| Part        | Bits | Range / Meaning                           |
+|-------------|------|-------------------------------------------|
+| Timestamp   | 42   | \~139 years (1 ms resolution from custom epoch) |
+| Worker ID   | 10   | Up to 1024 workers/instances              |
+| Sequence    | 11   | Up to 2048 IDs per ms per worker          |
+
+Practical capacity:
+
+| Parameter                               | Value                          |
+|-----------------------------------------|--------------------------------|
+| Max workers (horizontal instances)      | 1024                           |
+| Max IDs per ms per worker               | 2048                           |
+| Max IDs per ms globally                 | 2\,097\,152 (1024 * 2048)      |
+| Max IDs per second globally             | 2\,147\,483\,648 (2\,097\,152 * 1024) |
+| ID lifespan (before timestamp overflow) | \~139 years                    |
+
+How it works:
+- Timestamp (42 bits) ensures chronological ordering and long lifetime.
+- Worker ID (10 bits) allows wide horizontal scaling without coordination.
+- Sequence (11 bits) prevents collisions when multiple IDs are generated in the same millisecond on the same worker.
+- If the sequence space (2048) for a millisecond is exhausted, the generator waits for the next millisecond.
+
+### Caching Strategy
+- In-memory cache for frequently accessed URLs
+- Cache-aside pattern with automatic fallback
+- Reduces database load for popular URLs
+
+### Rate Limiting
+- Token Bucket algorithm
+- 100 requests per minute per IP address
+- Prevents abuse and ensures fair usage
+
+## 📊 Database Schema
+
+**UrlMappings Table:**
+- `Id` (bigint, PK) - Snowflake-generated unique ID
+- `ShortUrl` (varchar) - Shortened URL code
+- `OriginalUrl` (varchar) - Original long URL
+- Indexes on `ShortUrl` and `OriginalUrl` for fast lookups
 
 ## 🚦 Getting Started
 
@@ -229,73 +276,19 @@ Edit `appsettings.json` to configure the application:
 }
 ```
 
-## 🎯 Design Patterns Used
+## 🛠️ Technology Stack
 
-### 1. **Decorator Pattern (Cache Proxy)**
-The `CacheUrlMappingRepository` wraps the `UrlMappingRepository` to add caching functionality without modifying the original repository:
-- First checks in-memory cache
-- Falls back to database if not cached
-- Automatically caches results for subsequent requests
+- **.NET 9** - Latest .NET framework
+- **ASP.NET Core Minimal APIs** - Lightweight HTTP APIs
+- **Entity Framework Core** - ORM for database operations
+- **PostgreSQL 18** - Primary database
+- **Docker & Docker Compose** - Containerization
+- **IdGen** - Snowflake ID generation library
+- **Scalar** - Modern API documentation
+- **In-Memory Cache** - Performance optimization
 
-### 2. **CQRS (Command Query Responsibility Segregation)**
-- **Commands**: `ShortenUrl` - Modifies state (creates new mappings)
-- **Queries**: `GetShortUrl` - Reads state (retrieves URLs)
+## 📋 Prerequisites
 
-### 3. **Vertical Slice Architecture**
-Features are organized by use case rather than technical layers
-
-## ⚡ Performance Features
-
-### Snowflake ID Generation
-- **Distributed**: Generates unique IDs across multiple instances
-- **Time-based**: IDs are chronologically sortable
-- **Compact**: Efficient 64-bit unsigned integers
-- **Custom Epoch**: Started from 2025-10-18 for extended lifespan
-64-bit layout (1 unused sign bit + 63 bits payload):
-
-| Part        | Bits | Range / Meaning                           |
-|-------------|------|-------------------------------------------|
-| Timestamp   | 42   | \~139 years (1 ms resolution from custom epoch) |
-| Worker ID   | 10   | Up to 1024 workers/instances              |
-| Sequence    | 11   | Up to 2048 IDs per ms per worker          |
-
-Practical capacity:
-
-| Parameter                               | Value                          |
-|-----------------------------------------|--------------------------------|
-| Max workers (horizontal instances)      | 1024                           |
-| Max IDs per ms per worker               | 2048                           |
-| Max IDs per ms globally                 | 2\,097\,152 (1024 * 2048)      |
-| Max IDs per second globally             | 2\,147\,483\,648 (2\,097\,152 * 1024) |
-| ID lifespan (before timestamp overflow) | \~139 years                    |
-
-How it works:
-- Timestamp (42 bits) ensures chronological ordering and long lifetime.
-- Worker ID (10 bits) allows wide horizontal scaling without coordination.
-- Sequence (11 bits) prevents collisions when multiple IDs are generated in the same millisecond on the same worker.
-- If the sequence space (2048) for a millisecond is exhausted, the generator waits for the next millisecond.
-
-### Caching Strategy
-- In-memory cache for frequently accessed URLs
-- Cache-aside pattern with automatic fallback
-- Reduces database load for popular URLs
-
-### Rate Limiting
-- Token Bucket algorithm
-- 100 requests per minute per IP address
-- Prevents abuse and ensures fair usage
-
-## 📊 Database Schema
-
-**UrlMappings Table:**
-- `Id` (bigint, PK) - Snowflake-generated unique ID
-- `ShortUrl` (varchar) - Shortened URL code
-- `OriginalUrl` (varchar) - Original long URL
-- Indexes on `ShortUrl` and `OriginalUrl` for fast lookups
-
-## 📈 Scalability Considerations
-
-1. **Horizontal Scaling**: Snowflake IDs support multiple API instances, scaling database using sharding with consistent hashing
-2. **Caching**: Reduces database load for popular URLs
-3. **Database Indexing**: Fast lookups by short URL and original URL
-4. **Stateless API**: Easy to load balance across multiple instances
+- .NET 9 SDK
+- Docker Desktop (for PostgreSQL)
+- Visual Studio 2022 / JetBrains Rider / VS Code
