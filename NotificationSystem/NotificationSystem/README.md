@@ -53,6 +53,7 @@ It's beyond the scope of the task, just how it would look in practice.
 #### Outbox
 <img width="1424" height="776" alt="image" src="https://github.com/user-attachments/assets/54eeb143-551a-4791-8fe6-e6651f88aea3" />
 #### Tables schema
+
 <img width="725" height="152" alt="image" src="https://github.com/user-attachments/assets/5189e374-f7ea-4d81-9cdb-eef6d819eaa1" />
 
 
