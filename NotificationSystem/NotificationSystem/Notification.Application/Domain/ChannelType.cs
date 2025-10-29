@@ -2,7 +2,7 @@ namespace Notification.Application.Domain;
 
 public enum ChannelType
 {
-    Email,
-    Sms,
-    PushNotification
+    Email = 1,
+    Sms = 2,
+    PushNotification = 3
 }

@@ -9,7 +9,7 @@ public class Template
     public ChannelType Type { get; set; }
     public DateTime CreatedAt { get; set; }
 
-    internal Template(string name, string content, string subject ,ChannelType type)
+    internal Template(string name, string content, string subject, ChannelType type)
     {
         Name = name;
         Content = content;
