@@ -33,7 +33,7 @@ public class ShortenUrlHandler : IHttpCommandHandler<ShortenUrl>
         var urlMapping = await _urlMappingRepository.GetByOriginalUrl(query.OriginalUrl, cancellationToken);
         if (urlMapping != null)
         {
-            return Results.Ok(new ShortenUrlDto(urlMapping.ShortUrl, urlMapping.OriginalUrl));
+            return Results.Ok(new ShortenUrlDto($"{_options.BaseUrl}{urlMapping.ShortUrl}", urlMapping.OriginalUrl));
         }
 
         var id = _snowflakeService.GenerateId();

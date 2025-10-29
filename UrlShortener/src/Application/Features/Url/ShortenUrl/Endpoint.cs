@@ -9,7 +9,7 @@ namespace Application.Features.Url.ShortenUrl;
 public class Endpoint : IEndpoint
 {
     public void RegisterEndpoint(IEndpointRouteBuilder app)
-        => app.MapPost("/api/", async (
+        => app.MapPost("/", async (
                     ShortenUrl shortenUrl,
                     [FromServices] IHttpCommandHandler<ShortenUrl> shortenUrlHandler,
                     CancellationToken cancellationToken) =>

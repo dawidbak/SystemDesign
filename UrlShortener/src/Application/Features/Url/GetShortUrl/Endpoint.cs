@@ -9,7 +9,7 @@ namespace Application.Features.Url.GetShortUrl;
 public class Endpoint : IEndpoint
 {
     public void RegisterEndpoint(IEndpointRouteBuilder app)
-        => app.MapGet("/api/{shortUrl}", async (
+        => app.MapGet("/{shortUrl}", async (
                     string shortUrl,
                     [FromServices] IHttpQueryHandler<GetShortUrl> getShortUrlHandler,
                     CancellationToken cancellationToken) =>
